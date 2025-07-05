@@ -1,27 +1,22 @@
 "use client";
 
-import { DepositModule } from "@/components/DepositModule";
 import InsuranceBridgeCard from "@/components/InsuranceBridgeCard";
-import { RewardsModule } from "@/components/RewardsModule";
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans">
-      <div className="max-w-4xl mx-auto px-4 py-10">
-        <header className="mb-10 text-center">
-          <h1 className="text-4xl font-bold">SygmaOne Insurance</h1>
-          <p className="text-gray-500 mt-2">Parametric Web3 Insurance</p>
+    <div
+      className="min-h-screen bg-cover bg-center bg-no-repeat text-gray-900 font-sans"
+      style={{ backgroundImage: "url('/mountains.jpeg')" }}
+    >
+      <div className="backdrop-blur-sm bg-white/80 min-h-screen flex flex-col items-center px-4 py-6">
+        <header className="text-center">
+          <div className="flex flex-col items-center">
+            <img src="/logoblack.jpeg" alt="SygmaOne Logo" className="h-24 md:h-28 mb-1" />
+            <p className="text-gray-800 text-lg font-medium mt-1">Parametric Web3 Insurance</p>
+          </div>
         </header>
 
-        <div className="space-y-8">
-          {/* <section className="bg-gray-100 p-6 rounded-lg shadow">
-            <RewardsModule debtAmount={"100.00"} />
-          </section>
-
-          <section className="bg-gray-100 p-6 rounded-lg shadow">
-            <DepositModule />
-          </section> */}
-
+        <div className="w-full max-w-md mt-6">
           <section className="bg-gray-100 p-6 rounded-lg shadow">
             <InsuranceBridgeCard />
           </section>
