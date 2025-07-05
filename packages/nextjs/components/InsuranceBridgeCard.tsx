@@ -1,6 +1,11 @@
+// File: components/InsuranceBridgeCard.tsx
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { v4 as uuidv4 } from "uuid";
+
+// File: components/InsuranceBridgeCard.tsx
 
 const chains = [
   "Ethereum",
@@ -17,28 +22,54 @@ const chains = [
   "Celo",
 ];
 
+const tokens = ["ETH", "USDC", "USDT", "DAI"];
+
 const InsuranceBridgeCard = () => {
+  const router = useRouter();
+
   const [fromChain, setFromChain] = useState("Ethereum");
   const [toChain, setToChain] = useState("Arbitrum");
   const [provider, setProvider] = useState("Stargate");
+  const [token, setToken] = useState("ETH");
   const [amount, setAmount] = useState<number>(0);
-  const [protectTx, setProtectTx] = useState<boolean>(true);
+  const [inputValue, setInputValue] = useState("");
+  const [protectTx, setProtectTx] = useState(false);
 
   const networkFee = 0.000592;
-  const insuranceFee = useMemo(() => (protectTx ? amount * 0.0001 : 0), [amount, protectTx]);
-  const total = useMemo(() => amount + networkFee + insuranceFee, [amount, networkFee, insuranceFee]);
+  const insuranceFee = protectTx ? amount * 0.0001 : 0;
+  const total = amount + networkFee + insuranceFee;
+
+  const handleAmountChange = (val: string) => {
+    setInputValue(val);
+    setAmount(val === "" ? 0 : parseFloat(val));
+  };
+
+  const handleSend = () => {
+    const tx = {
+      id: uuidv4(),
+      status: "claimable",
+    };
+
+    const prev = typeof window !== "undefined" && localStorage.getItem("sygmaTxs");
+    const parsed = prev ? JSON.parse(prev) : [];
+
+    const updated = [...parsed, tx];
+    localStorage.setItem("sygmaTxs", JSON.stringify(updated));
+
+    router.push("/claims");
+  };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 space-y-4">
-      <h2 className="text-lg font-semibold">Transaction Summary</h2>
+    <div className="bg-white rounded-lg shadow-md p-6 max-w-md w-full mx-auto space-y-4">
+      <h2 className="text-lg font-semibold text-center">Transaction Summary</h2>
 
       {/* Bridge Provider */}
       <div>
         <label className="text-sm font-medium block mb-1">Bridge Provider</label>
         <select
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
           value={provider}
           onChange={e => setProvider(e.target.value)}
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
         >
           <option>Stargate</option>
           <option>1inch</option>
@@ -46,17 +77,17 @@ const InsuranceBridgeCard = () => {
         </select>
       </div>
 
-      {/* From / To */}
+      {/* From / To Chains */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium block mb-1">From</label>
           <select
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
             value={fromChain}
             onChange={e => setFromChain(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
           >
-            {chains.map(chain => (
-              <option key={chain}>{chain}</option>
+            {chains.map(c => (
+              <option key={c}>{c}</option>
             ))}
           </select>
         </div>
@@ -64,33 +95,48 @@ const InsuranceBridgeCard = () => {
         <div>
           <label className="text-sm font-medium block mb-1">To</label>
           <select
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
             value={toChain}
             onChange={e => setToChain(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
           >
-            {chains.map(chain => (
-              <option key={chain}>{chain}</option>
+            {chains.map(c => (
+              <option key={c}>{c}</option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* Send Amount */}
-      <div>
-        <label className="text-sm font-medium block mb-1 mt-2">Send Amount (ETH)</label>
-        <input
-          type="number"
-          min="0"
-          step="0.0001"
-          placeholder="0.00"
-          value={amount}
-          onChange={e => setAmount(parseFloat(e.target.value) || 0)}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-        />
+      {/* Token + Amount */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium block mb-1">Asset</label>
+          <select
+            value={token}
+            onChange={e => setToken(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+          >
+            {tokens.map(t => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium block mb-1">Send Amount</label>
+          <input
+            type="number"
+            value={inputValue}
+            onChange={e => handleAmountChange(e.target.value)}
+            placeholder="0.00"
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+            min={0}
+            step="0.0001"
+          />
+        </div>
       </div>
 
       {/* Protection Toggle */}
-      <div className="flex justify-between items-center mt-4">
+      <div className="flex justify-between items-center mt-2">
         <span className="text-sm font-medium text-pink-600">Protect transaction (0.01%)</span>
         <label className="relative inline-flex items-center cursor-pointer">
           <input
@@ -116,20 +162,31 @@ const InsuranceBridgeCard = () => {
         </div>
         <div className="flex justify-between">
           <span>Network fee</span>
-          <span>{networkFee.toFixed(6)} ETH</span>
+          <span>
+            {networkFee.toFixed(6)} {token}
+          </span>
         </div>
         <div className="flex justify-between">
           <span>Insurance</span>
-          <span>{insuranceFee.toFixed(6)} ETH</span>
+          <span>
+            {insuranceFee.toFixed(6)} {token}
+          </span>
         </div>
         <div className="flex justify-between font-semibold text-black mt-2">
           <span>Total</span>
-          <span>{total.toFixed(6)} ETH</span>
+          <span>
+            {total.toFixed(6)} {token}
+          </span>
         </div>
       </div>
 
-      {/* Send Button */}
-      <button className="w-full bg-black text-white py-2 rounded font-medium hover:bg-gray-800 transition">Send</button>
+      {/* Submit Button */}
+      <button
+        onClick={handleSend}
+        className="w-full bg-black text-white py-2 rounded font-medium hover:bg-gray-800 transition"
+      >
+        Send
+      </button>
     </div>
   );
 };
